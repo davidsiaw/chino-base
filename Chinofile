@@ -1,0 +1,7 @@
+name "ChinoBase"
+version "0.0.1"
+author "YourName"
+author_email "your_name@example.com"
+company_name "YourCompany"
+identifier "com.yourcompany.chinobase"
+created_at DateTime.new(2026, 10, 13)

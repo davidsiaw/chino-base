@@ -1,0 +1,7 @@
+.git
+build
+temp
+vendor
+.bundle
+.pi-sessions
+.pirag
