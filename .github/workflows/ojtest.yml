@@ -1,0 +1,41 @@
+---
+name: ojtest
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ojtest-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ojtest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: chino-dev
+          load: true
+          cache-from: type=gha,scope=chino-dev
+          cache-to: type=gha,scope=chino-dev,mode=max
+
+      - name: Run ojtest
+        run: |
+          docker run --rm \
+            -v "$PWD:/app" \
+            -e HOME=/tmp \
+            -u "$(id -u)" \
+            --entrypoint=ojtest \
+            chino-dev

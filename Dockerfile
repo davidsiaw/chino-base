@@ -1,18 +1,23 @@
 FROM ruby:3.4-slim
 
-# build-essential: puma / nio4r native extensions
 RUN apt-get update \
- && apt-get install -y --no-install-recommends build-essential \
+ && apt-get install -y --no-install-recommends build-essential nodejs npm curl \
  && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g @objj/cappuccino@1.3.1
+
+ENV PATH=/app/scripts:$PATH
 
 WORKDIR /app
 
 COPY Gemfile Gemfile.lock ./
 RUN bundle install
 
+COPY tests/Gemfile tests/Gemfile.lock tests/
+RUN BUNDLE_GEMFILE=/app/tests/Gemfile bundle install
+
 COPY . .
 
-# chino's preview server (Sinatra) binds 0.0.0.0:4444
 EXPOSE 4444
 
 CMD ["bundle", "exec", "chino"]

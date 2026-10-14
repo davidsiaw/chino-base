@@ -1,0 +1,51 @@
+---
+name: rspec
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: rspec-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rspec:
+    runs-on: ubuntu-latest
+
+    services:
+      chrome:
+        image: selenium/standalone-chromium
+        options: --shm-size=2g
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build dev image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: chino-dev
+          load: true
+          cache-from: type=gha,scope=chino-dev
+          cache-to: type=gha,scope=chino-dev,mode=max
+
+      - name: Run rspec
+        run: |
+          docker run --rm \
+            --network "${{ job.container.network }}" \
+            --network-alias chino-app \
+            -v "$PWD:/app" \
+            -e HOME=/tmp \
+            -e CHROME_HOSTNAME=chrome \
+            -e TEST_HOST=chino-app \
+            -u "$(id -u)" \
+            --entrypoint=rspec \
+            chino-dev

@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -uo pipefail
+SELF_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SELF_DIR/.."
+
+# scripts/ is on PATH and this file is named ojtest, so skip our own
+# directory or a bare `ojtest` would re-run this script forever.
+REAL_OJTEST=""
+IFS=: read -ra path_dirs <<< "$PATH"
+for d in "${path_dirs[@]}"; do
+  [ "$(cd "$d" 2>/dev/null && pwd)" = "$SELF_DIR" ] && continue
+  if [ -x "$d/ojtest" ]; then REAL_OJTEST="$d/ojtest"; break; fi
+done
+
+log() { echo "[ojtest $(date '+%H:%M:%S')] $*"; }
+
+if [ "$#" -eq 0 ]; then
+  set -- tests/unit/*Test.j
+fi
+
+if [ -z "$REAL_OJTEST" ]; then
+  log 'real ojtest not found on PATH (npm install -g @objj/cappuccino)'; exit 127
+fi
+log "ojtest: $REAL_OJTEST"
+log "node:   $(node --version 2>/dev/null || echo 'NOT FOUND')"
+log "running $# file(s):"
+for f in "$@"; do log "  $f"; done
+log 'loading Objective-J runtime (silent for a few seconds)...'
+
+start=$(date +%s)
+"$REAL_OJTEST" "$@"
+status=$?
+log "finished in $(( $(date +%s) - start ))s, exit $status"
+exit $status
