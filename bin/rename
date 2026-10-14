@@ -1,0 +1,42 @@
+#!/bin/bash
+# Rename the app: bin/rename NewName
+#
+# Updates the Chinofile `name` (page title and bundle name), the last
+# segment of the Chinofile `identifier`, and the smoke spec that checks
+# the page title. The current name is read from the Chinofile, so the
+# script can be run again later.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+usage() { echo "usage: bin/rename NewName   (letters and digits, starting with a letter)" >&2; exit 1; }
+
+[ $# -eq 1 ] || usage
+NEW=$1
+[[ "$NEW" =~ ^[A-Za-z][A-Za-z0-9]*$ ]] || usage
+
+OLD=$(sed -n 's/^name "\(.*\)"$/\1/p' Chinofile)
+if [ -z "$OLD" ]; then
+  echo 'rename: could not find a `name "..."` line in Chinofile' >&2; exit 1
+fi
+if [ "$OLD" = "$NEW" ]; then
+  echo "rename: already named $NEW"; exit 0
+fi
+
+export OLD NEW
+NEW_ID=$(printf '%s' "$NEW" | tr '[:upper:]' '[:lower:]')
+export NEW_ID
+
+# Chinofile: name line, and the last dotted segment of identifier.
+perl -pi -e '
+  s/^name "\Q$ENV{OLD}\E"$/name "$ENV{NEW}"/;
+  s/^(identifier "(?:[^"]*\.)?)[^."]*"/$1$ENV{NEW_ID}"/;
+' Chinofile
+
+# Specs that mention the old name (e.g. the page title check).
+grep -rlF -- "$OLD" tests/spec 2>/dev/null | while read -r f; do
+  perl -pi -e 's/\Q$ENV{OLD}\E/$ENV{NEW}/g' "$f"
+done
+
+echo "rename: $OLD -> $NEW"
+grep -E '^(name|identifier) ' Chinofile

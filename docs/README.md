@@ -1,7 +1,6 @@
 # docs
 
-These notes are for whoever works on this repo next, human or agent.
-Each file is short, so read the one that matches your task.
+These notes are for whoever works on this repo next, human or agent. Each file is short, so read the one that matches your task.
 
 | File | Read it when |
 |---|---|
@@ -11,5 +10,4 @@ Each file is short, so read the one that matches your task.
 | [testing.md](testing.md) | You are writing or running specs and unit tests. |
 | [ci.md](ci.md) | You are changing `.github/workflows/`. |
 
-Every gotcha recorded here has been hit for real at least once. If you
-hit a new one, add it.
+Every gotcha recorded here has been hit for real at least once. If you hit a new one, add it.
